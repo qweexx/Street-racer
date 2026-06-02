@@ -22,6 +22,7 @@ NUM_LANES = 4
 LANE_WIDTH = WIDTH // NUM_LANES
 ROAD_Y_START = 0
 ROAD_SPEED = 5
+enemy_speed = 5
 
 # машина
 car_width = 50
@@ -36,7 +37,9 @@ enemies = []
 spawn_timer = 0
 running = True
 score = 0
+best_score = 0
 game_over = False
+speed = 5
 
 while running:
     for event in pygame.event.get():
@@ -70,6 +73,9 @@ while running:
 
         # счет
         score += 1
+        #скорость врагов
+        if score % 60 == 0:
+            enemy_speed += 0.5
 
         # спавн врагов
         spawn_timer += 1
@@ -82,7 +88,7 @@ while running:
 
         # враги вниз
         for enemy in enemies:
-            enemy[1] += 5
+            enemy[1] += enemy_speed
 
         # удаление врагов за экраном
         enemies = [e for e in enemies if e[1] < HEIGHT]
@@ -120,9 +126,17 @@ while running:
     font = pygame.font.Font(None, 36)
     score_text = font.render(f'Score: {score}', True, WHITE)
     screen.blit(score_text, (10, 10))
+    font = pygame.font.Font(None, 36)
+    score_text = font.render(f'Score: {score}', True, WHITE)
+    best_text = font.render(f'Best: {best_score}', True, YELLOW)
+    screen.blit(score_text, (10, 10))
+    screen.blit(best_text, (10, 40))
 
     # экран проигрыша
     if game_over:
+        if score > best_score:
+            best_score = score
+
         dark = pygame.Surface((WIDTH, HEIGHT))
         dark.set_alpha(180)
         dark.fill((0, 0, 0))
@@ -136,6 +150,8 @@ while running:
         screen.blit(game_over_text, game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 50)))
         screen.blit(score_final, score_final.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 10)))
         screen.blit(restart_text, restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 50)))
+
+
 
     pygame.display.flip()
     clock.tick(60)
