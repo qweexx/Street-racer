@@ -36,7 +36,7 @@ road_offset = 0
 enemies = []
 spawn_timer = 0
 cash = []
-cash_timer = 0
+cash_timer = 30
 running = True
 score = 0
 best_score = 0
@@ -44,6 +44,18 @@ cash_count = 0
 best_cash = 0
 game_over = False
 speed = 5
+# картинки машин
+try:
+    player_img = pygame.image.load('images/player_car.png')
+    player_img = pygame.transform.scale(player_img, (car_width, car_height))
+except:
+    player_img = None
+try:
+    enemy_img = pygame.image.load('images/enemy_car.png')
+    enemy_img = pygame.transform.scale(enemy_img, (car_width, car_height))
+    enemy_img = pygame.transform.flip(enemy_img, False, True)
+except:
+    enemy_img = None
 
 while running:
     for event in pygame.event.get():
@@ -81,22 +93,59 @@ while running:
 
         # счет
         score += 1
-        #скорость врагов
+        # скорость врагов
         if score % 60 == 0:
             enemy_speed += 0.5
 
         # спавн врагов
         spawn_timer += 1
         if spawn_timer > 30:
-            lane = random.randint(0, NUM_LANES - 1)
-            enemy_x = lane * LANE_WIDTH + (LANE_WIDTH - car_width) // 2
-            enemy_y = -car_height
-            enemies.append([enemy_x, enemy_y, lane])
+            # проверка на занятые полосы дабы у игркоа был шанс увернтся, что бы не зажимали в клетки
+            busy_lanes = []
+            for enemy in enemies:
+                if enemy[1] < 200:
+                    busy_lanes.append(enemy[2])
+
+            # свободные полосы
+            free_lanes = [l for l in range(NUM_LANES) if l not in busy_lanes]
+
+            if free_lanes:
+                lane = random.choice(free_lanes)
+                enemy_x = lane * LANE_WIDTH + (LANE_WIDTH - car_width) // 2
+                enemy_y = -car_height
+                enemies.append([enemy_x, enemy_y, lane])
+
             spawn_timer = 0
-        #спавн лавэхи
+
+        # спавн лавэхи
         cash_timer += 1
         if cash_timer > 60:
-            cash_lane = random.randint(0, NUM_LANES - 1)
+            # пытаюсь исправить баг с монетами во врагах, блок ищет свободную полосу с врагом которая дальше 150 пикс
+            free_lanes = []
+            for l in range(NUM_LANES):
+                closest_enemy = 999
+                for enemy in enemies:
+                    if enemy[2] == l and enemy[1] < closest_enemy:
+                        closest_enemy = enemy[1]
+                if closest_enemy > 150 or closest_enemy == 999:
+                    free_lanes.append(l)
+
+            # проверка на свободную полосу и если ее нет берем полосу с самым дальним врагом
+            if not free_lanes:
+                best_lane = 0
+                best_distance = 0
+                for l in range(NUM_LANES):
+                    closest_enemy = 999
+                    for enemy in enemies:
+                        if enemy[2] == l and enemy[1] < closest_enemy:
+                            closest_enemy = enemy[1]
+                    if closest_enemy > best_distance:
+                        best_distance = closest_enemy
+                        best_lane = l
+                cash_lane = best_lane
+            else:
+                cash_lane = random.choice(free_lanes)
+
             cash_x = cash_lane * LANE_WIDTH + LANE_WIDTH // 2
             cash_y = -30
             cash.append([cash_x, cash_y])
@@ -118,14 +167,15 @@ while running:
             if player_rect.colliderect(enemy_rect):
                 game_over = True
 
-        #сбор денег
+        # сбор денег
         for c in cash[:]:
-            cash_rect = pygame.Rect(c[0] -10, c[1] -10, 20, 20)
+            cash_rect = pygame.Rect(c[0] - 10, c[1] - 10, 20, 20)
             if player_rect.colliderect(cash_rect):
                 cash.remove(c)
                 score += 10
                 cash_count += 1
 
+        # удаление лавэхи за экраном
         cash = [c for c in cash if c[1] < HEIGHT]
                 # рисовка
     screen.fill(GRAY)
@@ -142,15 +192,26 @@ while running:
             pygame.draw.rect(screen, WHITE, (line_x - 2, line_y, 4, 20))
 
     # рисовка кар гг
-    pygame.draw.rect(screen, YELLOW, (car_x, car_y, car_width, car_height))
-    pygame.draw.rect(screen, (0, 0, 0), (car_x + 5, car_y + 10, car_width - 10, 20))
+    if player_img:
+        screen.blit(player_img, (car_x, car_y))
+    else:
+        pygame.draw.rect(screen, YELLOW, (car_x, car_y, car_width, car_height))
+        pygame.draw.rect(screen, (0, 0, 0), (car_x + 5, car_y + 10, car_width - 10, 20))
 
     # рисовка врага
     for enemy in enemies:
-        pygame.draw.rect(screen, RED, (enemy[0], enemy[1], car_width, car_height))
-    # рисовка денегг
+        if enemy_img:
+            screen.blit(enemy_img, (enemy[0], enemy[1]))
+        else:
+            pygame.draw.rect(screen, RED, (enemy[0], enemy[1], car_width, car_height))
+
+    # рисовка денег
     for c in cash:
         pygame.draw.circle(screen, GREEN, (c[0], c[1]), 10)
+
+    # счет на экран
+    font = pygame.font.Font(None, 36)
+    ...
 
         # счет на экран
     font = pygame.font.Font(None, 36)
