@@ -45,6 +45,16 @@ best_cash = 0
 game_over = False
 in_menu = True
 speed = 5
+# звуки
+pygame.mixer.init()
+try:
+    crash_sound = pygame.mixer.Sound('sounds/crash.wav')
+except:
+    crash_sound = None
+try:
+    coin_sound = pygame.mixer.Sound('sounds/coin.wav')
+except:
+    coin_sound = None
 # картинки машин
 try:
     player_img = pygame.image.load('images/player_car.png')
@@ -193,6 +203,8 @@ while running:
         for enemy in enemies:
             enemy_rect = pygame.Rect(enemy[0], enemy[1], car_width, car_height)
             if player_rect.colliderect(enemy_rect):
+                if crash_sound:
+                    crash_sound.play()
                 game_over = True
 
         # сбор денег
@@ -202,6 +214,8 @@ while running:
                 cash.remove(c)
                 score += 10
                 cash_count += 1
+                if coin_sound:
+                    coin_sound.play()
 
         # удаление лавэхи за экраном
         cash = [c for c in cash if c[1] < HEIGHT]
