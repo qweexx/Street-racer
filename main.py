@@ -49,8 +49,14 @@ shield_active = False
 shield_timer = 0
 shield_items = []
 shield_spawn_timer = 0
+police_items = []
+police_spawn_timer = 0
 # звуки
 pygame.mixer.init()
+
+# сложность
+difficulty = 'normal'
+
 try:
     crash_sound = pygame.mixer.Sound('sounds/crash.wav')
 except:
@@ -77,6 +83,13 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
+            if in_menu:
+                if event.key == pygame.K_1:
+                    difficulty = 'easy'
+                if event.key == pygame.K_2:
+                    difficulty = 'normal'
+                if event.key == pygame.K_3:
+                    difficulty = 'hard'
             # перезапуск или старт по пробелу
             if event.key == pygame.K_SPACE:
                 if game_over:
@@ -92,9 +105,28 @@ while running:
                     shield_timer = 0
                     shield_items.clear()
                     shield_spawn_timer = 0
+                    police_items.clear()
+                    police_spawn_timer = 0
                     game_over = False
                 elif in_menu:
                     in_menu = False
+                    # сложность
+                    if difficulty == 'easy':
+                        enemy_speed = 3
+                        ROAD_SPEED = 3
+                    elif difficulty == 'hard':
+                        enemy_speed = 7
+                        ROAD_SPEED = 7
+                    else:
+                        enemy_speed = 5
+                        ROAD_SPEED = 5
+                    shield_active = False
+                    shield_timer = 0
+                    shield_items.clear()
+                    shield_spawn_timer = 0
+                    police_items.clear()
+                    police_spawn_timer = 0
+                    game_over = False
             # выход в меню или выход из игры
             if event.key == pygame.K_ESCAPE:
                 if in_menu:
@@ -121,6 +153,8 @@ while running:
         small_font = pygame.font.Font(None, 24)
 
         title = big_font.render("STREET RACER", True, YELLOW)
+        diff_text = font.render(f'Difficulty: {difficulty.upper()}', True, WHITE)
+        hint = small_font.render('Press 1-EASY 2-NORMAL 3-HARD', True, GRAY)
         start = font.render("Press SPACE to start", True, WHITE)
         exit_text = small_font.render("Press ESC to exit", True, GRAY)
         best = font.render(f"Best Score: {best_score}", True, GREEN)
@@ -131,6 +165,8 @@ while running:
         screen.blit(exit_text, exit_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 40)))
         screen.blit(best, best.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 100)))
         screen.blit(best_c, best_c.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 140)))
+        screen.blit(diff_text, diff_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 40)))
+        screen.blit(hint, hint.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
 
         pygame.display.flip()
         clock.tick(60)
@@ -147,12 +183,15 @@ while running:
         # счет
         score += 1
         # скорость врагов
+        speed_up = 0.3 if difficulty == 'easy' else (0.8 if difficulty == 'hard' else 0.5)
         if score % 60 == 0:
-            enemy_speed += 0.5
+            enemy_speed += speed_up
 
         # спавн врагов
+        spawn_delay = 40 if difficulty == 'easy' else (20 if difficulty == 'hard' else 30)
         spawn_timer += 1
-        if spawn_timer > 30:
+        if spawn_timer > spawn_delay:
+            spawn_timer = 0
             busy_lanes = []
             for enemy in enemies:
                 if enemy[1] < 200:
@@ -205,11 +244,21 @@ while running:
             shield_items.append([shield_x, shield_y])
             shield_spawn_timer = 0
 
+        # спавн полис
+        police_spawn_timer += 1
+        if police_spawn_timer > 600:
+            police_lane = random.randint(0, NUM_LANES - 1)
+            police_x = police_lane * LANE_WIDTH + (LANE_WIDTH - car_width) // 2
+            police_y = -car_height
+            police_items.append([police_x, police_y, police_lane, 0])
+            police_spawn_timer = 0
         # враги вниз
         for enemy in enemies:
             enemy[1] += enemy_speed
         for c in cash:
             c[1] += enemy_speed
+        for p in police_items:
+            p[1] += enemy_speed * 1.5
 
         # удаление врагов за экраном
         enemies = [e for e in enemies if e[1] < HEIGHT]
@@ -232,6 +281,18 @@ while running:
                     if crash_sound:
                         crash_sound.play()
                     game_over = True
+        # проверка на обезд полис
+        for p in police_items[:]:
+            police_rect = pygame.Rect(p[0], p[1], car_width, car_height)
+            # если задел то щит не спасает - дэд
+            if player_rect.colliderect(police_rect):
+                if crash_sound:
+                    crash_sound.play()
+                game_over = True
+            if p[1] > HEIGHT and p[3] == 0:
+                p[3] = 1
+                score += 50
+
 
         # сбор денег
         for c in cash[:]:
@@ -255,6 +316,7 @@ while running:
         # удаление лавэхи за экраном
         cash = [c for c in cash if c[1] < HEIGHT]
         shield_items = [s for s in shield_items if s[1] < HEIGHT]
+        police_items = [p for p in police_items if p[1] < HEIGHT + 50]
 
     # рисовка
     screen.fill(GRAY)
@@ -287,6 +349,15 @@ while running:
             screen.blit(enemy_img, (enemy[0], enemy[1]))
         else:
             pygame.draw.rect(screen, RED, (enemy[0], enemy[1], car_width, car_height))
+
+    # risovka police
+    for p in police_items:
+        flash_color = (0, 0, 255) if(score // 10) % 2 == 0 else (255, 0, 0)
+        if enemy_img:
+            screen.blit(enemy_img, (p[0], p[1]))
+        else:
+            pygame.draw.rect(screen, (0, 0, 100), (p[0], p[1], car_width, car_height))
+        pygame.draw.rect(screen, flash_color, (p[0] + car_width//2 - 5, p[1] - 10, 10, 10))
 
     # рисовка денег
     for c in cash:
