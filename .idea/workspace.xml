@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1f0a23c3-8621-4da7-a8f4-c0f4cac36e71" name="Changes" comment="добавлено:&#10;щит для игрока в виде отдельного предмета">
+    <list default="true" id="1f0a23c3-8621-4da7-a8f4-c0f4cac36e71" name="Changes" comment="добавлено:&#10;добавлен особый враг ввидео плоиции и добавлен выбор сложности">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -132,7 +132,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780483074519</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="добавлено:&#10;добавлен особый враг ввидео плоиции и добавлен выбор сложности">
+      <option name="closed" value="true" />
+      <created>1780506001319</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1780506001319</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -155,6 +163,7 @@
     <MESSAGE value="добавлено&#10;сделал меню запуск по робелу и выход по эскейп" />
     <MESSAGE value="добавлено:&#10;звук сбора денег и звук удара(удар перестал рабоать как его подрезал, позже исправлю)" />
     <MESSAGE value="добавлено:&#10;щит для игрока в виде отдельного предмета" />
-    <option name="LAST_COMMIT_MESSAGE" value="добавлено:&#10;щит для игрока в виде отдельного предмета" />
+    <MESSAGE value="добавлено:&#10;добавлен особый враг ввидео плоиции и добавлен выбор сложности" />
+    <option name="LAST_COMMIT_MESSAGE" value="добавлено:&#10;добавлен особый враг ввидео плоиции и добавлен выбор сложности" />
   </component>
 </project>

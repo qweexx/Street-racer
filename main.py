@@ -32,6 +32,7 @@ car_lane = 1
 car_x = LANE_WIDTH * car_lane + (LANE_WIDTH - car_width) // 2
 car_y = HEIGHT - car_height - 50
 
+day_time = 0
 road_offset = 0
 enemies = []
 spawn_timer = 0
@@ -77,6 +78,34 @@ try:
     enemy_img = pygame.transform.flip(enemy_img, False, True)
 except:
     enemy_img = None
+
+# table redordov
+def load_records():
+    records = []
+    try:
+        with open('records.txt', 'r') as f:
+            for line in f:
+                parts = line.strip().split(',')
+                if len(parts) == 2:
+                    records.append((int(parts[0]), int(parts[1])))
+    except:
+        pass
+    return records
+
+def save_records(records):
+    with open('records.txt', 'w') as f:
+        for score, cash in records:
+            f.write(f'{score}, {cash}\n')
+
+def add_record(score, cash, records):
+    records.append((score, cash))
+    records.sort(reverse=True)
+    return records[:5]
+
+records = load_records()
+if records:
+    best_score = records[0][0]
+    best_cash = records[0][1]
 
 while running:
     for event in pygame.event.get():
@@ -148,25 +177,36 @@ while running:
     if in_menu:
         screen.fill((0, 0, 0))
 
-        big_font = pygame.font.Font(None, 72)
-        font = pygame.font.Font(None, 36)
-        small_font = pygame.font.Font(None, 24)
+        big_font = pygame.font.Font(None, 50)
+        font = pygame.font.Font(None, 24)
+        small_font = pygame.font.Font(None, 18)
 
         title = big_font.render("STREET RACER", True, YELLOW)
         diff_text = font.render(f'Difficulty: {difficulty.upper()}', True, WHITE)
-        hint = small_font.render('Press 1-EASY 2-NORMAL 3-HARD', True, GRAY)
-        start = font.render("Press SPACE to start", True, WHITE)
-        exit_text = small_font.render("Press ESC to exit", True, GRAY)
-        best = font.render(f"Best Score: {best_score}", True, GREEN)
-        best_c = font.render(f"Best Cash: {best_cash}", True, GREEN)
+        hint = small_font.render('1-EASY  2-NORMAL  3-HARD', True, GRAY)
+        start = font.render("SPACE to start", True, WHITE)
+        exit_text = small_font.render("ESC to exit", True, GRAY)
+        best = font.render(f"Best: {best_score} pts | {best_cash} cash", True, GREEN)
 
-        screen.blit(title, title.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 80)))
-        screen.blit(start, start.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
-        screen.blit(exit_text, exit_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 40)))
-        screen.blit(best, best.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 100)))
-        screen.blit(best_c, best_c.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 140)))
-        screen.blit(diff_text, diff_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 40)))
-        screen.blit(hint, hint.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
+        # заголовок сверху
+        screen.blit(title, title.get_rect(center=(WIDTH // 2, 40)))
+        # сложность
+        screen.blit(diff_text, diff_text.get_rect(center=(WIDTH // 2, 90)))
+        # подсказка
+        screen.blit(hint, hint.get_rect(center=(WIDTH // 2, 120)))
+        # старт
+        screen.blit(start, start.get_rect(center=(WIDTH // 2, 160)))
+        # выход
+        screen.blit(exit_text, exit_text.get_rect(center=(WIDTH // 2, 190)))
+        # рекорд
+        screen.blit(best, best.get_rect(center=(WIDTH // 2, 230)))
+
+        # таблица рекордов
+        top_label = small_font.render('TOP 5:', True, WHITE)
+        screen.blit(top_label, (WIDTH // 2 - 25, 260))
+        for i, (sc, ca) in enumerate(records):
+            line = small_font.render(f'{i + 1}. {sc} pts | {ca} cash', True, (180, 180, 180))
+            screen.blit(line, (WIDTH // 2 - 50, 280 + i * 18))
 
         pygame.display.flip()
         clock.tick(60)
@@ -182,6 +222,7 @@ while running:
 
         # счет
         score += 1
+        day_time = (day_time + 1) % 3600
         # скорость врагов
         speed_up = 0.3 if difficulty == 'easy' else (0.8 if difficulty == 'hard' else 0.5)
         if score % 60 == 0:
@@ -317,20 +358,37 @@ while running:
         cash = [c for c in cash if c[1] < HEIGHT]
         shield_items = [s for s in shield_items if s[1] < HEIGHT]
         police_items = [p for p in police_items if p[1] < HEIGHT + 50]
-
+    # day time 0 день 900 закат 1800 ночь 2700 рассвет
+    if day_time < 900:
+        t = day_time / 900
+        bg_color = (100 + int(55 * t), 130 + int(30 * t), 100 + int(50 * t))
+        road_color = (50 + int(20 * t), 50, 50)
+    elif day_time < 1800:
+        t = (day_time - 900) / 900
+        bg_color = (155 - int(100 * t), 160 - int(100 * t), 150 - int(100 * t))
+        road_color = (70  - int(35 * t), 50 - int(25 * t), 50 - int(25 * t))
+    elif day_time < 2700:
+        t = (day_time - 1800) / 900
+        bg_color = (55 + int(100 * t), 60 + int(100 * t), 50 + int(100 * t))
+        road_color = (35 + int(35 * t), 25 + int(25 * t), 25 + int(25 * t))
+    else:
+        t = (day_time - 2700) / 900  # рассвет → день
+        bg_color = (155 - int(55 * t), 160 - int(30 * t), 150 - int(50 * t))
+        road_color = (70 - int(20 * t), 50, 50)
     # рисовка
-    screen.fill(GRAY)
+    screen.fill(bg_color)
 
     # рисовка дороги
     for i in range(NUM_LANES):
-        pygame.draw.rect(screen, (50, 50, 50), (i * LANE_WIDTH, 0, LANE_WIDTH, HEIGHT))
+        pygame.draw.rect(screen, road_color, (i * LANE_WIDTH, 0, LANE_WIDTH, HEIGHT))
 
     # ЛИния разметки
     for lane in range(1, NUM_LANES):
         line_x = lane * LANE_WIDTH
         for y in range(0, HEIGHT, 40):
             line_y = (y + road_offset) % HEIGHT
-            pygame.draw.rect(screen, WHITE, (line_x - 2, line_y, 4, 20))
+            line_color = (180, 180, 180) if day_time > 900 and day_time < 2700 else WHITE
+            pygame.draw.rect(screen, line_color, (line_x - 2, line_y, 4, 20))
 
     # свет когда игрок вщял щит
     if shield_active:
@@ -398,6 +456,8 @@ while running:
         cash_final = font.render(f'Cash: {cash_count}', True, GREEN)
         restart_text = font.render("Press SPACE to restart", True, WHITE)
         menu_text = font.render("Press ESC for menu", True, GRAY)
+        records = add_record(score, cash_count, records)
+        save_records(records)
 
         screen.blit(game_over_text, game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 60)))
         screen.blit(score_final, score_final.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
