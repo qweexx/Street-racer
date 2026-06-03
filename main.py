@@ -35,9 +35,13 @@ car_y = HEIGHT - car_height - 50
 road_offset = 0
 enemies = []
 spawn_timer = 0
+cash = []
+cash_timer = 0
 running = True
 score = 0
 best_score = 0
+cash_count = 0
+best_cash = 0
 game_over = False
 speed = 5
 
@@ -50,8 +54,12 @@ while running:
             if game_over and event.key == pygame.K_SPACE:
                 car_lane = 1
                 enemies.clear()
+                cash.clear()
+                cash_timer = 0
+                cash_count = 0
                 spawn_timer = 0
                 score = 0
+                enemy_speed = 5
                 game_over = False
 
             # управление если игра идет
@@ -85,10 +93,20 @@ while running:
             enemy_y = -car_height
             enemies.append([enemy_x, enemy_y, lane])
             spawn_timer = 0
+        #спавн лавэхи
+        cash_timer += 1
+        if cash_timer > 60:
+            cash_lane = random.randint(0, NUM_LANES - 1)
+            cash_x = cash_lane * LANE_WIDTH + LANE_WIDTH // 2
+            cash_y = -30
+            cash.append([cash_x, cash_y])
+            cash_timer = 0
 
         # враги вниз
         for enemy in enemies:
             enemy[1] += enemy_speed
+        for c in cash:
+            c[1] += enemy_speed
 
         # удаление врагов за экраном
         enemies = [e for e in enemies if e[1] < HEIGHT]
@@ -100,7 +118,16 @@ while running:
             if player_rect.colliderect(enemy_rect):
                 game_over = True
 
-    # рисовка
+        #сбор денег
+        for c in cash[:]:
+            cash_rect = pygame.Rect(c[0] -10, c[1] -10, 20, 20)
+            if player_rect.colliderect(cash_rect):
+                cash.remove(c)
+                score += 10
+                cash_count += 1
+
+        cash = [c for c in cash if c[1] < HEIGHT]
+                # рисовка
     screen.fill(GRAY)
 
     # рисовка дороги
@@ -121,21 +148,26 @@ while running:
     # рисовка врага
     for enemy in enemies:
         pygame.draw.rect(screen, RED, (enemy[0], enemy[1], car_width, car_height))
+    # рисовка денегг
+    for c in cash:
+        pygame.draw.circle(screen, GREEN, (c[0], c[1]), 10)
 
-    # счет на экран
-    font = pygame.font.Font(None, 36)
-    score_text = font.render(f'Score: {score}', True, WHITE)
-    screen.blit(score_text, (10, 10))
+        # счет на экран
     font = pygame.font.Font(None, 36)
     score_text = font.render(f'Score: {score}', True, WHITE)
     best_text = font.render(f'Best: {best_score}', True, YELLOW)
+    cash_text = font.render(f'Cash: {cash_count}', True, GREEN)
+    best_cash_text = font.render(f'Best Cash: {best_cash}', True, GREEN)
     screen.blit(score_text, (10, 10))
     screen.blit(best_text, (10, 40))
-
+    screen.blit(cash_text, (10, 70))
+    screen.blit(best_cash_text, (10, 100))
     # экран проигрыша
     if game_over:
         if score > best_score:
             best_score = score
+        if cash_count > best_cash:
+            best_cash = cash_count
 
         dark = pygame.Surface((WIDTH, HEIGHT))
         dark.set_alpha(180)
@@ -145,11 +177,13 @@ while running:
         big_font = pygame.font.Font(None, 72)
         game_over_text = big_font.render("GAME OVER", True, RED)
         score_final = font.render(f'Score: {score}', True, WHITE)
+        cash_final = font.render(f'Cash: {cash_count}', True, GREEN)
         restart_text = font.render("Press SPACE to restart", True, WHITE)
 
-        screen.blit(game_over_text, game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 50)))
-        screen.blit(score_final, score_final.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 10)))
-        screen.blit(restart_text, restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 50)))
+        screen.blit(game_over_text, game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 60)))
+        screen.blit(score_final, score_final.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
+        screen.blit(cash_final, cash_final.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 40)))
+        screen.blit(restart_text, restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 80)))
 
 
 
