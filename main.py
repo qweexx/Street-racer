@@ -45,6 +45,10 @@ best_cash = 0
 game_over = False
 in_menu = True
 speed = 5
+shield_active = False
+shield_timer = 0
+shield_items = []
+shield_spawn_timer = 0
 # звуки
 pygame.mixer.init()
 try:
@@ -84,6 +88,10 @@ while running:
                     spawn_timer = 0
                     score = 0
                     enemy_speed = 5
+                    shield_active = False
+                    shield_timer = 0
+                    shield_items.clear()
+                    shield_spawn_timer = 0
                     game_over = False
                 elif in_menu:
                     in_menu = False
@@ -188,6 +196,14 @@ while running:
             cash_y = -30
             cash.append([cash_x, cash_y])
             cash_timer = 0
+        # спавн защиты
+        shield_spawn_timer += 1
+        if shield_spawn_timer > 180:
+            shield_lane = random.randint(0, NUM_LANES - 1)
+            shield_x = shield_lane * LANE_WIDTH + LANE_WIDTH // 2
+            shield_y = -30
+            shield_items.append([shield_x, shield_y])
+            shield_spawn_timer = 0
 
         # враги вниз
         for enemy in enemies:
@@ -198,14 +214,24 @@ while running:
         # удаление врагов за экраном
         enemies = [e for e in enemies if e[1] < HEIGHT]
 
+        # таймер зашиты
+        if shield_active:
+            shield_timer -= 1
+            if shield_timer <= 0:
+                shield_active = False
+
         # ДТП
         player_rect = pygame.Rect(car_x, car_y, car_width, car_height)
-        for enemy in enemies:
+        for enemy in enemies[:]:
             enemy_rect = pygame.Rect(enemy[0], enemy[1], car_width, car_height)
             if player_rect.colliderect(enemy_rect):
-                if crash_sound:
-                    crash_sound.play()
-                game_over = True
+                if shield_active:
+                    enemies.remove(enemy)
+                    score += 20
+                else:
+                    if crash_sound:
+                        crash_sound.play()
+                    game_over = True
 
         # сбор денег
         for c in cash[:]:
@@ -216,9 +242,19 @@ while running:
                 cash_count += 1
                 if coin_sound:
                     coin_sound.play()
+        for s in shield_items:
+            s[1] += enemy_speed
+        #сбор защиты
+        for s in shield_items[:]:
+            shield_rect = pygame.Rect(s[0] - 12, s[1] - 12, 24, 24)
+            if player_rect.colliderect(shield_rect):
+                shield_items.remove(s)
+                shield_active = True
+                shield_timer = 180
 
         # удаление лавэхи за экраном
         cash = [c for c in cash if c[1] < HEIGHT]
+        shield_items = [s for s in shield_items if s[1] < HEIGHT]
 
     # рисовка
     screen.fill(GRAY)
@@ -233,6 +269,10 @@ while running:
         for y in range(0, HEIGHT, 40):
             line_y = (y + road_offset) % HEIGHT
             pygame.draw.rect(screen, WHITE, (line_x - 2, line_y, 4, 20))
+
+    # свет когда игрок вщял щит
+    if shield_active:
+        pygame.draw.rect(screen, (50, 100, 255), (car_x -5, car_y -5, car_width + 10, car_height + 10), 3)
 
     # рисовка кар гг
     if player_img:
@@ -251,6 +291,12 @@ while running:
     # рисовка денег
     for c in cash:
         pygame.draw.circle(screen, GREEN, (c[0], c[1]), 10)
+
+    # рисовка щита
+    for s in shield_items:
+        pygame.draw.circle(screen, (50, 100, 255), (s[0], s[1]), 12)
+        s_text = font.render("S", True, WHITE)
+        screen.blit(s_text, s_text.get_rect(center=(s[0], s[1])))
 
     # счет на экран
     font = pygame.font.Font(None, 36)
