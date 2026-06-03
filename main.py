@@ -43,6 +43,7 @@ best_score = 0
 cash_count = 0
 best_cash = 0
 game_over = False
+in_menu = True
 speed = 5
 # картинки машин
 try:
@@ -62,20 +63,30 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
-            # перезапуск по пробелу
-            if game_over and event.key == pygame.K_SPACE:
-                car_lane = 1
-                enemies.clear()
-                cash.clear()
-                cash_timer = 0
-                cash_count = 0
-                spawn_timer = 0
-                score = 0
-                enemy_speed = 5
-                game_over = False
+            # перезапуск или старт по пробелу
+            if event.key == pygame.K_SPACE:
+                if game_over:
+                    car_lane = 1
+                    enemies.clear()
+                    cash.clear()
+                    cash_timer = 0
+                    cash_count = 0
+                    spawn_timer = 0
+                    score = 0
+                    enemy_speed = 5
+                    game_over = False
+                elif in_menu:
+                    in_menu = False
+            # выход в меню или выход из игры
+            if event.key == pygame.K_ESCAPE:
+                if in_menu:
+                    running = False
+                else:
+                    in_menu = True
+                    game_over = False
 
             # управление если игра идет
-            if not game_over:
+            if not game_over and not in_menu:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                     if car_lane > 0:
                         car_lane -= 1
@@ -83,8 +94,32 @@ while running:
                     if car_lane < NUM_LANES - 1:
                         car_lane += 1
 
+    # меню
+    if in_menu:
+        screen.fill((0, 0, 0))
+
+        big_font = pygame.font.Font(None, 72)
+        font = pygame.font.Font(None, 36)
+        small_font = pygame.font.Font(None, 24)
+
+        title = big_font.render("STREET RACER", True, YELLOW)
+        start = font.render("Press SPACE to start", True, WHITE)
+        exit_text = small_font.render("Press ESC to exit", True, GRAY)
+        best = font.render(f"Best Score: {best_score}", True, GREEN)
+        best_c = font.render(f"Best Cash: {best_cash}", True, GREEN)
+
+        screen.blit(title, title.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 80)))
+        screen.blit(start, start.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
+        screen.blit(exit_text, exit_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 40)))
+        screen.blit(best, best.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 100)))
+        screen.blit(best_c, best_c.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 140)))
+
+        pygame.display.flip()
+        clock.tick(60)
+        continue
+
     # обновление только если игра идет
-    if not game_over:
+    if not game_over and not in_menu:
         # анимка движения дороги
         road_offset = (road_offset + ROAD_SPEED) % 100
 
@@ -100,27 +135,21 @@ while running:
         # спавн врагов
         spawn_timer += 1
         if spawn_timer > 30:
-            # проверка на занятые полосы дабы у игркоа был шанс увернтся, что бы не зажимали в клетки
             busy_lanes = []
             for enemy in enemies:
                 if enemy[1] < 200:
                     busy_lanes.append(enemy[2])
-
-            # свободные полосы
             free_lanes = [l for l in range(NUM_LANES) if l not in busy_lanes]
-
             if free_lanes:
                 lane = random.choice(free_lanes)
                 enemy_x = lane * LANE_WIDTH + (LANE_WIDTH - car_width) // 2
                 enemy_y = -car_height
                 enemies.append([enemy_x, enemy_y, lane])
-
             spawn_timer = 0
 
         # спавн лавэхи
         cash_timer += 1
         if cash_timer > 60:
-            # пытаюсь исправить баг с монетами во врагах, блок ищет свободную полосу с врагом которая дальше 150 пикс
             free_lanes = []
             for l in range(NUM_LANES):
                 closest_enemy = 999
@@ -130,7 +159,6 @@ while running:
                 if closest_enemy > 150 or closest_enemy == 999:
                     free_lanes.append(l)
 
-            # проверка на свободную полосу и если ее нет берем полосу с самым дальним врагом
             if not free_lanes:
                 best_lane = 0
                 best_distance = 0
@@ -177,7 +205,8 @@ while running:
 
         # удаление лавэхи за экраном
         cash = [c for c in cash if c[1] < HEIGHT]
-                # рисовка
+
+    # рисовка
     screen.fill(GRAY)
 
     # рисовка дороги
@@ -211,10 +240,6 @@ while running:
 
     # счет на экран
     font = pygame.font.Font(None, 36)
-    ...
-
-        # счет на экран
-    font = pygame.font.Font(None, 36)
     score_text = font.render(f'Score: {score}', True, WHITE)
     best_text = font.render(f'Best: {best_score}', True, YELLOW)
     cash_text = font.render(f'Cash: {cash_count}', True, GREEN)
@@ -223,6 +248,7 @@ while running:
     screen.blit(best_text, (10, 40))
     screen.blit(cash_text, (10, 70))
     screen.blit(best_cash_text, (10, 100))
+
     # экран проигрыша
     if game_over:
         if score > best_score:
@@ -240,13 +266,13 @@ while running:
         score_final = font.render(f'Score: {score}', True, WHITE)
         cash_final = font.render(f'Cash: {cash_count}', True, GREEN)
         restart_text = font.render("Press SPACE to restart", True, WHITE)
+        menu_text = font.render("Press ESC for menu", True, GRAY)
 
         screen.blit(game_over_text, game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 60)))
         screen.blit(score_final, score_final.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
         screen.blit(cash_final, cash_final.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 40)))
         screen.blit(restart_text, restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 80)))
-
-
+        screen.blit(menu_text, menu_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 110)))
 
     pygame.display.flip()
     clock.tick(60)
