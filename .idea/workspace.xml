@@ -4,7 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1f0a23c3-8621-4da7-a8f4-c0f4cac36e71" name="Changes" comment="добавлено:&#10;добавлен особый враг ввидео плоиции и добавлен выбор сложности">
+    <list default="true" id="1f0a23c3-8621-4da7-a8f4-c0f4cac36e71" name="Changes" comment="добавлено:&#10;таблица рекордов">
+      <change afterPath="$PROJECT_DIR$/resize_images.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -43,16 +44,17 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.main.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.main.executor": "Run",
+    "Python.resize_images.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "master"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -140,7 +142,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780506001319</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="добавлено:&#10;таблица рекордов">
+      <option name="closed" value="true" />
+      <created>1780512087374</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1780512087374</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -164,6 +174,7 @@
     <MESSAGE value="добавлено:&#10;звук сбора денег и звук удара(удар перестал рабоать как его подрезал, позже исправлю)" />
     <MESSAGE value="добавлено:&#10;щит для игрока в виде отдельного предмета" />
     <MESSAGE value="добавлено:&#10;добавлен особый враг ввидео плоиции и добавлен выбор сложности" />
-    <option name="LAST_COMMIT_MESSAGE" value="добавлено:&#10;добавлен особый враг ввидео плоиции и добавлен выбор сложности" />
+    <MESSAGE value="добавлено:&#10;таблица рекордов" />
+    <option name="LAST_COMMIT_MESSAGE" value="добавлено:&#10;таблица рекордов" />
   </component>
 </project>

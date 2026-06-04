@@ -58,6 +58,18 @@ pygame.mixer.init()
 # сложность
 difficulty = 'normal'
 
+# скины
+skins = [
+    {"name": "White", "color": WHITE, "type": "free", "price": 0, "unlocked": True, "img": "player_car.png"},
+    {"name": "Yellow", "color": YELLOW, "type": "record", "price": 500, "unlocked": False, "img": "car_yellow.png"},
+    {"name": "Red", "color": RED, "type": "cash", "price": 150, "unlocked": False, "img": "car_red.png"},
+    {"name": "Black", "color": (30, 30, 30), "type": "legendary", "price_record": 2000, "price_cash": 500, "unlocked": False, "img": "car_black.png"},
+]
+current_skin = 0
+total_cash = 0
+best_record = 0
+in_skins = False
+
 try:
     crash_sound = pygame.mixer.Sound('sounds/crash.wav')
 except:
@@ -67,11 +79,6 @@ try:
 except:
     coin_sound = None
 # картинки машин
-try:
-    player_img = pygame.image.load('images/player_car.png')
-    player_img = pygame.transform.scale(player_img, (car_width, car_height))
-except:
-    player_img = None
 try:
     enemy_img = pygame.image.load('images/enemy_car.png')
     enemy_img = pygame.transform.scale(enemy_img, (car_width, car_height))
@@ -91,6 +98,28 @@ def load_records():
     except:
         pass
     return records
+
+def load_skins():
+    try:
+        with open('skins.txt', 'r') as f:
+            data = f.read().strip().split(',')
+            for i, val in enumerate(data):
+                if i < len(skins):
+                    skins[i]['unlocked'] = (val == '1')
+    except:
+        pass
+# загрузка картинок скинов
+for s in skins:
+    try:
+        s["image"] = pygame.image.load(f"images/{s['img']}")
+        s["image"] = pygame.transform.scale(s["image"], (car_width, car_height))
+    except:
+        s["image"] = None
+
+def save_skins():
+    with open('skins.txt', 'w') as f:
+        f.write(','.join(['1' if s['unlocked'] else '0' for s in skins]))
+load_skins()
 
 def save_records(records):
     with open('records.txt', 'w') as f:
@@ -119,6 +148,8 @@ while running:
                     difficulty = 'normal'
                 if event.key == pygame.K_3:
                     difficulty = 'hard'
+                if event.key == pygame.K_4:
+                    in_skins = True
             # перезапуск или старт по пробелу
             if event.key == pygame.K_SPACE:
                 if game_over:
@@ -164,6 +195,28 @@ while running:
                     in_menu = True
                     game_over = False
 
+            if in_skins:
+                if event.key == pygame.K_ESCAPE:
+                    in_skins = False
+                if event.key == pygame.K_UP and current_skin > 0:
+                    current_skin -= 1
+                if event.key == pygame.K_DOWN and current_skin < len(skins) - 1:
+                    current_skin += 1
+                if event.key == pygame.K_RETURN:
+                    s = skins[current_skin]
+                    if not s["unlocked"]:
+                        if s["type"] == "record" and best_record >= s["price"]:
+                            s["unlocked"] = True
+                            save_skins()
+                        elif s["type"] == "cash" and total_cash >= s["price"]:
+                            s["unlocked"] = True
+                            total_cash -= s["price"]
+                            save_skins()
+                        elif s["type"] == "legendary" and best_record >= s["price_record"] and total_cash >= s["price_cash"]:
+                            s["unlocked"] = True
+                            total_cash -= s["price_cash"]
+                            save_skins()
+
             # управление если игра идет
             if not game_over and not in_menu:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_a:
@@ -198,6 +251,9 @@ while running:
         screen.blit(start, start.get_rect(center=(WIDTH // 2, 160)))
         # выход
         screen.blit(exit_text, exit_text.get_rect(center=(WIDTH // 2, 190)))
+        # скины
+        skins_btn = small_font.render('Press 4 for SKINS', True, GRAY)
+        screen.blit(skins_btn, skins_btn.get_rect(center=(WIDTH // 2, 205)))
         # рекорд
         screen.blit(best, best.get_rect(center=(WIDTH // 2, 230)))
 
@@ -207,6 +263,44 @@ while running:
         for i, (sc, ca) in enumerate(records):
             line = small_font.render(f'{i + 1}. {sc} pts | {ca} cash', True, (180, 180, 180))
             screen.blit(line, (WIDTH // 2 - 50, 280 + i * 18))
+
+        pygame.display.flip()
+        clock.tick(60)
+        continue
+
+    # экран скинов
+    if in_skins:
+        screen.fill((0, 0, 0))
+
+        title = pygame.font.Font(None, 36).render("SKINS", True, YELLOW)
+        screen.blit(title, title.get_rect(center=(WIDTH // 2, 30)))
+
+        info = pygame.font.Font(None, 20).render(f"Cash: {total_cash} | Record: {best_record}", True, WHITE)
+        screen.blit(info, (WIDTH // 2 - 80, 60))
+
+        for i, s in enumerate(skins):
+            y = 100 + i * 35
+            if s["unlocked"]:
+                text = f"{s['name']} - OWNED"
+                color = s["color"] if i == current_skin else WHITE
+            else:
+                if s["type"] == "record":
+                    text = f"{s['name']} - {s['price']} record"
+                elif s["type"] == "cash":
+                    text = f"{s['name']} - {s['price']} cash"
+                else:
+                    text = f"{s['name']} - {s['price_record']} rec + {s['price_cash']} cash"
+                color = GRAY
+
+            line = pygame.font.Font(None, 24).render(text, True, color)
+            screen.blit(line, (WIDTH // 2 - 80, y))
+
+            if i == current_skin:
+                arrow = pygame.font.Font(None, 24).render(">", True, YELLOW)
+                screen.blit(arrow, (WIDTH // 2 - 100, y))
+
+        hint = pygame.font.Font(None, 18).render("UP/DOWN - choose | ENTER - buy/select | ESC - back", True, GRAY)
+        screen.blit(hint, hint.get_rect(center=(WIDTH // 2, HEIGHT - 40)))
 
         pygame.display.flip()
         clock.tick(60)
@@ -395,12 +489,13 @@ while running:
         pygame.draw.rect(screen, (50, 100, 255), (car_x -5, car_y -5, car_width + 10, car_height + 10), 3)
 
     # рисовка кар гг
-    if player_img:
-        screen.blit(player_img, (car_x, car_y))
+    skin_img = skins[current_skin].get("image")
+    if skin_img:
+        screen.blit(skin_img, (car_x, car_y))
     else:
-        pygame.draw.rect(screen, YELLOW, (car_x, car_y, car_width, car_height))
+        car_color = skins[current_skin]["color"]
+        pygame.draw.rect(screen, car_color, (car_x, car_y, car_width, car_height))
         pygame.draw.rect(screen, (0, 0, 0), (car_x + 5, car_y + 10, car_width - 10, 20))
-
     # рисовка врага
     for enemy in enemies:
         if enemy_img:
@@ -456,6 +551,15 @@ while running:
         cash_final = font.render(f'Cash: {cash_count}', True, GREEN)
         restart_text = font.render("Press SPACE to restart", True, WHITE)
         menu_text = font.render("Press ESC for menu", True, GRAY)
+        total_cash += cash_count
+        if score > best_record:
+            best_record = score
+        for s in skins:
+            if s["type"] == "record" and best_record >= s["price"]:
+                s["unlocked"] = True
+            if s["type"] == "legendary" and best_record >= s["price_record"] and total_cash >= s["price_cash"]:
+                s["unlocked"] = True
+        save_skins()
         records = add_record(score, cash_count, records)
         save_records(records)
 
